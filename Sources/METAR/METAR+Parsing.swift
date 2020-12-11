@@ -29,7 +29,7 @@ extension METAR {
 
         if let identifier = identifier {
             self.identifier = identifier
-        } else if let match = metar.matches(for: #"(.*?)([A-Z0-9]{4})\b"#).first, let range = match[0], let identifierRange = match[2] {
+        } else if let match = metar.matches(for: #"(.*?)([A-Z0-9]{4})(?:\s|$)"#).first, let range = match[0], let identifierRange = match[2] {
             self.identifier = String(metar[identifierRange])
             metar.removeSubrange(range)
         } else {
@@ -38,7 +38,7 @@ extension METAR {
 
         // MARK: Date
 
-        if let match = metar.matches(for: #"(?<!\S)([0-9]{2})([0-9]{2})([0-9]{2})Z\b"#).first, let timeZone = TimeZone(identifier: "UTC"), let dateStringRange = match[0], let dayRange = match[1], let hourRange = match[2], let minuteRange = match[3], let day = Int(String(metar[dayRange])), let hour = Int(String(metar[hourRange])), let minute = Int(String(metar[minuteRange])) {
+        if let match = metar.matches(for: #"(?<!\S)([0-9]{2})([0-9]{2})([0-9]{2})Z(?:\s|$)"#).first, let timeZone = TimeZone(identifier: "UTC"), let dateStringRange = match[0], let dayRange = match[1], let hourRange = match[2], let minuteRange = match[3], let day = Int(String(metar[dayRange])), let hour = Int(String(metar[hourRange])), let minute = Int(String(metar[minuteRange])) {
             var calendar = Calendar(identifier: .gregorian)
             calendar.timeZone = timeZone
 
@@ -100,7 +100,7 @@ extension METAR {
 
         // MARK: Runway Visual Range
 
-        for match in metar.matches(for: #"\bR([0-9]{2}[L|C|R]?)\/([P|M]?)([0-9]{4})(?:V([P|M]?)([0-9]{4}))?(FT)?(?:/?(U|D|N))?\b"#).reversed() {
+        for match in metar.matches(for: #"\bR([0-9]{2}[L|C|R]?)\/([P|M]?)([0-9]{4})(?:V([P|M]?)([0-9]{4}))?(FT)?(?:/?(U|D|N))?(?:\s|$)"#).reversed() {
             guard let range = match[0], let runwayRange = match[1], let visibilityValue = match[3].flatMap({ Double(String(metar[$0])) }) else {
                 continue
             }
@@ -151,7 +151,7 @@ extension METAR {
 
         // Runway Conditions
 
-        for match in metar.matches(for: #"R([0-9]{2}[L|C|R]?)\/(?:(?:([0-9]{1}|\/)([0-9]{1}|\/)([0-9]{2}|\/\/)|(CLRD))(?:([0-9]{2})|\/\/))"#).reversed() {
+        for match in metar.matches(for: #"R([0-9]{2}[L|C|R]?)\/(?:(?:([0-9]{1}|\/)([0-9]{1}|\/)([0-9]{2}|\/\/)|(CLRD))(?:([0-9]{2})|\/\/))(?:\s|$)"#).reversed() {
             guard let range = match[0] else { continue }
 
             let runwayDesignation: RunwayCondition.RunwayDesignation
@@ -309,7 +309,7 @@ extension METAR {
 
         // MARK: Military Colour Code
 
-        if let match = metar.matches(for: #"(?<!\S)(BLU|WHT|GRN|YLO1|YLO2|AMB|RED)\b"#).first, let range = match[0], let colourRange = match[1] {
+        if let match = metar.matches(for: #"(?<!\S)(BLU|WHT|GRN|YLO1|YLO2|AMB|RED)(?:\s|$)"#).first, let range = match[0], let colourRange = match[1] {
             switch String(metar[colourRange]) {
             case "BLU":
                 militaryColorCode = .blue
@@ -384,7 +384,7 @@ extension METAR {
 
         // MARK: Clouds
 
-        if let match = metar.matches(for: #"(?<!\S)(SKC|CLR|NSC|NCD|CAVOK)\b"#).first, let range = match[0], let cloudStringRange = match[1] {
+        if let match = metar.matches(for: #"(?<!\S)(SKC|CLR|NSC|NCD|CAVOK)(?:\s|$)"#).first, let range = match[0], let cloudStringRange = match[1] {
 
             switch metar[cloudStringRange] {
             case "SKC":
@@ -465,7 +465,7 @@ extension METAR {
 
         // MARK: Temperatures
 
-        if let match = metar.matches(for: #"(?<!\S)(M)?([0-9]{2})/(?:(?:(M)?([0-9]{2}))|//)?"#).first, let range = match[0], let temperatureRange = match[2], let rawTemperature = Double(String(metar[temperatureRange])) {
+        if let match = metar.matches(for: #"(?<!\S)(M)?([0-9]{2})/(?:(?:(M)?([0-9]{2}))|//)?(?:\s|$)"#).first, let range = match[0], let temperatureRange = match[2], let rawTemperature = Double(String(metar[temperatureRange])) {
 
             let temperatureIsNegative = match[1] != nil
             let temperature = rawTemperature * (temperatureIsNegative ? -1 : 1)
@@ -486,7 +486,7 @@ extension METAR {
         // MARK: Visibility
 
         func parseVisibility(_ metar: inout String) {
-            guard let match = metar.matches(for: #"(?<!\S)(P|M)?(?:(?:([0-9]{4})(NDV)?)|(?:([0-9]+)(?:\/([0-9]+))?(?: ([0-9]+)\/([0-9]+))?(KM|SM)))\b"#).first, let range = match[0] else {
+            guard let match = metar.matches(for: #"(?<!\S)(P|M)?(?:(?:([0-9]{4})(NDV)?)|(?:([0-9]+)(?:\/([0-9]+))?(?: ([0-9]+)\/([0-9]+))?(KM|SM)))(?:\s|$)"#).first, let range = match[0] else {
                 return
             }
 
@@ -540,7 +540,7 @@ extension METAR {
 
         // MARK: Directional Visibilities
 
-        for match in metar.matches(for: #"(?<!\S)(M|P)?([0-9]{4})(N|NE|E|SE|S|SW|W|NW)\b"#).reversed() {
+        for match in metar.matches(for: #"(?<!\S)(M|P)?([0-9]{4})(N|NE|E|SE|S|SW|W|NW)(?:\s|$)"#).reversed() {
             guard let range = match[0] else { continue }
             guard let visibility = match[2].flatMap({ Double(String(metar[$0])) }) else { continue }
 
@@ -583,7 +583,7 @@ extension METAR {
 
         // MARK: Weather
 
-        for match in metar.matches(for: #"(?<!\S)(-|\+|VC|RE)?([A-Z]{2})([A-Z]{2})?([A-Z]{2})?\b"#).reversed() {
+        for match in metar.matches(for: #"(?<!\S)(-|\+|VC|RE)?([A-Z]{2})([A-Z]{2})?([A-Z]{2})?(?:\s|$)"#).reversed() {
             let modifier: Weather.Modifier
             switch match[1].map({ String(metar[$0]) }) {
             case "+":
@@ -686,6 +686,9 @@ extension METAR {
                 metar.removeSubrange(range)
             }
         }
+
+        metar = metar.trimmingCharacters(in: .whitespacesAndNewlines)
+        unparsedString = metar.isEmpty ? nil : metar
     }
 
 }

@@ -27,5 +27,6 @@ public struct METAR: Hashable {
     public var isAutomatic = false
     public var isCorrection = false
     public var remarks: String?
+    public var unparsedString: String?
 
 }
