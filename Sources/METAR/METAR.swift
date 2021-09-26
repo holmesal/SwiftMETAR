@@ -49,9 +49,6 @@ extension METAR {
 extension METAR {
 
     private static func noaaFlightRules(ceilingAndVisibilityOK: Bool, cloudLayers: [CloudLayer], visibility: Measurement<UnitLength>?) -> NOAAFlightRules? {
-        if ceilingAndVisibilityOK {
-            return .vfr
-        }
 
         var ceiling = Double.greatestFiniteMagnitude
         for layer in cloudLayers {
@@ -68,29 +65,31 @@ extension METAR {
                 ceiling = height
             }
         }
-
-        if ceiling > 3000, let visibilityValue = visibility?.converted(to: .miles).value, visibilityValue > 5 {
-            return .vfr
-        }
-
+        
         if ceiling < 500 {
             return .lifr
-        } else if ceiling < 1000 {
+        }
+        if let visibility = visibility?.converted(to: .miles).value, visibility < 1 {
+            return .lifr
+        }
+        if ceiling < 1000 {
             return .ifr
-        } else if ceiling <= 3000 {
+        }
+        if let visibility = visibility?.converted(to: .miles).value, visibility < 3 {
+            return .ifr
+        }
+        if ceiling <= 3000 {
             return .mvfr
         }
-
-        if let visibilityValue = visibility?.converted(to: .miles).value {
-            if visibilityValue < 1 {
-                return .lifr
-            } else if visibilityValue < 3 {
-                return .ifr
-            } else if visibilityValue <= 5 {
-                return .mvfr
-            }
+        if let visibility = visibility?.converted(to: .miles).value, visibility <= 5 {
+            return .mvfr
         }
-
+        if let visibility = visibility?.converted(to: .miles).value, visibility > 5, ceiling > 3000 {
+            return .vfr
+        }
+        if ceilingAndVisibilityOK {
+            return .vfr
+        }
         return nil
     }
 
